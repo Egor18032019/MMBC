@@ -1,54 +1,53 @@
 package com.mmbc.demo.controllers;
 
-import com.mmbc.demo.schemas.FileChangeRequest;
 import com.mmbc.demo.schemas.FileChangeResponse;
 import com.mmbc.demo.schemas.FileCreatResponse;
 import com.mmbc.demo.schemas.FileStatusResponse;
 import com.mmbc.demo.service.FileChangeService;
-import com.mmbc.demo.service.FileStorageService;
+import com.mmbc.demo.service.FileServiceService;
+import com.mmbc.demo.store.StoreFileName;
 import com.mmbc.demo.utils.EndPoint;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping(EndPoint.file)
+@RequestMapping(path = EndPoint.file)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FileController {
 
     FileChangeService fileChangeService;
-    FileStorageService fileStorageService;
+    FileServiceService fileStorageService;
 
-    public FileController(FileChangeService fileChangeService, FileStorageService fileStorageService) {
+    public FileController(FileChangeService fileChangeService, FileServiceService fileStorageService) {
         this.fileChangeService = fileChangeService;
         this.fileStorageService = fileStorageService;
     }
 
     @PostMapping()
     @CrossOrigin(allowCredentials = "true", originPatterns = "*")
-    public FileCreatResponse handleFileUpload(@RequestParam(value = "video", required = true) MultipartFile file) {
-
+    public ResponseEntity<FileCreatResponse> handleFileUpload(@RequestParam(value = "file", required = true) MultipartFile file) {
         if (file != null && !file.isEmpty()) {
+            System.out.println(file.getOriginalFilename());
 
-            System.out.println("!= null ");
-
+            StoreFileName storeFileName = fileStorageService.save(file);
+            return new ResponseEntity<FileCreatResponse>(new FileCreatResponse(storeFileName.getId()), HttpStatus.OK);
         } else {
-            System.out.println("= null ");
-
-
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        return new FileCreatResponse();
 
     }
 
 
-    @PatchMapping(value = {"id"})
+    @PatchMapping(value = {"{id}"})
     @CrossOrigin(allowCredentials = "true", originPatterns = "*")
-    public FileChangeResponse handleFileChange(@RequestBody() FileChangeRequest fileChangeRequest) {
+    public FileChangeResponse handleFileChange(@PathVariable String id) {
 
-        System.out.println("fileChangeRequest ");
+        System.out.println("handleFileChange path " + id);
 
 
         return new FileChangeResponse();
@@ -59,10 +58,10 @@ public class FileController {
     @CrossOrigin(allowCredentials = "true", originPatterns = "*")
     public FileStatusResponse handleFileStatus(@PathVariable String id) {
 
-        System.out.println("handleFileStatus");
+        System.out.println("handleFileStatus " + id);
 
 
-        return new FileStatusResponse();
+        return new FileStatusResponse(id, "file", true, "pro");
 
     }
 

@@ -1,7 +1,16 @@
 package com.mmbc.demo.schemas;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class FileStatusResponse {
-        //TODO в чем разница между id и именем файла ? id это идишник из бд 
+        //TODO в чем разница между id и именем файла ? id это идишник из бд
     String id;//: uid,
     String filename;
     Boolean processing;//- идёт ли процесс обработки
