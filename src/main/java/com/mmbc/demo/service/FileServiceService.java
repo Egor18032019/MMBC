@@ -64,13 +64,9 @@ public class FileServiceService implements FileServiceRepository {
             StoreFileName storeFile = new StoreFileName(oldNameFile);
             filesStoreRepository.save(storeFile);
 
-
             String newFileName = storeFile.getId() + "." + extension;
-
-
             Path newPath = Path.of(String.valueOf(this.path), newFileName);
             Files.copy(multipartFile.getInputStream(), newPath);
-            System.out.println(newPath.getFileName());
 
             log.info("Сохраняем файл" + multipartFile.getOriginalFilename());
             return storeFile;
