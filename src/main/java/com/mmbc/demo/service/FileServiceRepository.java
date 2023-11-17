@@ -1,6 +1,6 @@
 package com.mmbc.demo.service;
 
-import com.mmbc.demo.store.StoreFileName;
+import com.mmbc.demo.store.Movie;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,7 +11,7 @@ public interface FileServiceRepository {
 
     void init();
 
-    StoreFileName save(MultipartFile multipartFile);
+    Movie save(MultipartFile multipartFile);
 
     Resource load(String fileName);
 

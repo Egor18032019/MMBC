@@ -1,49 +1,116 @@
 package com.mmbc.demo.service;
 
+import com.mmbc.demo.store.FilesStoreRepository;
+import com.mmbc.demo.store.Movie;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
+import net.bramp.ffmpeg.FFmpegUtils;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
+import net.bramp.ffmpeg.job.FFmpegJob;
+import net.bramp.ffmpeg.probe.FFmpegProbeResult;
+import net.bramp.ffmpeg.progress.Progress;
+import net.bramp.ffmpeg.progress.ProgressListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class FileChangeService {
     private final Path path = Paths.get(System.getProperty("user.dir") + "/fileStorage");
+    final
+    FilesStoreRepository filesStoreRepository;
 
-    public Boolean change(int width, int height) throws IOException {
+    public FileChangeService(FilesStoreRepository filesStoreRepository) {
+        this.filesStoreRepository = filesStoreRepository;
+    }
 
-
-
+    public String change(int width, int height) throws IOException {
+        FFmpeg ffmpeg = new FFmpeg("c:\\FFmpeg\\bin\\ffmpeg");
+        FFprobe ffprobe = new FFprobe("c:\\FFmpeg\\bin\\ffprobe");
+        String input = "fileStorage/input.mp4";
+        String output = "fileStorage/output.mp4";
         FFmpegBuilder builder = new FFmpegBuilder()
-
-                .setInput("eba3a582-39c1-4cc2-82d9-faec447ffaed.mp4")     // Filename, or a FFmpegProbeResult
+                .setInput(input)     // Filename, or a FFmpegProbeResult
                 .overrideOutputFiles(true) // Override the output if it exists
-
-                .addOutput("output.mp4")   // Filename for the destination
+                .addOutput(output)   // Filename for the destination
                 .setFormat("mp4")        // Format is inferred from filename, or can be set
-                .setTargetSize(250_000)  // Aim for a 250KB file
-
-                .disableSubtitle()       // No subtiles
-
-                .setAudioChannels(1)         // Mono audio
-                .setAudioCodec("aac")        // using the aac codec
-
-                .setVideoCodec("libx264")     // Video using x264
-                .setVideoResolution(640, 480) // at 640x480 resolution
-
+                .setVideoResolution(width, height) // at widthxheight resolution
                 .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL).done(); // Allow FFmpeg to use experimental specs
 
-        FFmpegExecutor executor = new FFmpegExecutor();
+        FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
 
 // Run a one-pass encode
         executor.createJob(builder).run();
 
-// Or run a two-pass encode (which is better quality at the cost of being slower)
-        executor.createTwoPassJob(builder).run();
-        return true;
+        return output;
+    }
+
+    public void changeResolution(String id, int width, int height) throws IOException {
+        UUID movieId = UUID.fromString(id);
+        Movie movie = filesStoreRepository.getReferenceById(movieId);
+        System.out.println("1   FFmpeg   !");
+        System.out.println(System.getProperty("FFmpeg"));
+        System.out.println(System.getProperty("ffmpeg"));
+//        System.setProperty("ffmpeg", Const.pathFFmpeg); // todo сделать
+        FFmpeg ffmpeg = new FFmpeg("c:\\FFmpeg\\bin\\ffmpeg");
+        FFprobe ffprobe = new FFprobe("c:\\FFmpeg\\bin\\ffprobe");
+        //todo исправить
+        String input = "fileStorage/test1.mp4";
+        String output = "fileStorage/output.mp4";
+        FFmpegProbeResult in = ffprobe.probe(input);
+
+
+        FFmpegBuilder builder = new FFmpegBuilder()
+                .setInput(input) // Or filename
+                .overrideOutputFiles(true) // Override the output if it exists
+                .addOutput(output)   // Filename for the destination
+                .setFormat("mp4")        // Format is inferred from filename, or can be set
+                .setVideoResolution(width, height) // at widthxheight resolution
+                 .done();
+        FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
+
+            // Using the FFmpegProbeResult determine the duration of the input
+        FFmpegJob job = executor.createJob(builder, new ProgressListener() {
+            final double duration_ns = in.getFormat().duration * TimeUnit.SECONDS.toNanos(1);
+
+            @Override
+            public void progress(Progress progress) {
+                double percentage = progress.out_time_ns / duration_ns;
+                movie.setStatus(String.valueOf(progress.status));
+                Long oldFrame = movie.getFrame();
+                movie.setFrame(progress.frame);
+                boolean isSuccess = oldFrame.compareTo(progress.frame) < 0;
+                movie.setProcessingSuccess(Boolean.toString(isSuccess));
+//                filesStoreRepository.save(movie);
+                filesStoreRepository.saveAndFlush(movie);
+                // Print out interesting information about the progress
+                System.out.println(String.format(
+                        "[%.0f%%] status:%s frame:%d time:%s ms fps:%.0f speed:%.2fx",
+                        percentage * 100,
+                        progress.status,
+                        progress.frame,
+                        FFmpegUtils.toTimecode(progress.out_time_ns, TimeUnit.NANOSECONDS),
+                        progress.fps.doubleValue(),
+                        progress.speed
+                ));
+            }
+        });
+        System.out.println("run");
+        job.run();
+        System.out.println("end");
+    }
+
+    public Movie getStatus(String id) throws IOException {
+        UUID movieId = UUID.fromString(id);
+        Movie movie = filesStoreRepository.getReferenceById(movieId);
+        return movie;
     }
 }

@@ -1,7 +1,7 @@
 package com.mmbc.demo.service;
 
 import com.mmbc.demo.exception.BadRequestException;
-import com.mmbc.demo.store.StoreFileName;
+import com.mmbc.demo.store.Movie;
 import com.mmbc.demo.store.FilesStoreRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.Random;
 import java.util.stream.Stream;
 
 @Service
@@ -44,7 +43,7 @@ public class FileServiceService implements FileServiceRepository {
     }
 
     @Override
-    public StoreFileName save(MultipartFile multipartFile) {
+    public Movie save(MultipartFile multipartFile) {
         if (!Files.exists(this.path)) {
             this.init();
         }
@@ -61,7 +60,7 @@ public class FileServiceService implements FileServiceRepository {
                 System.out.println("не то расширение");
                 throw new BadRequestException("Files with the mp.4 extension are required");
             }
-            StoreFileName storeFile = new StoreFileName(oldNameFile);
+            Movie storeFile = new Movie(oldNameFile);
             filesStoreRepository.save(storeFile);
 
             String newFileName = storeFile.getId() + "." + extension;

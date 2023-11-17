@@ -2,5 +2,7 @@ package com.mmbc.demo.store;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface FilesStoreRepository extends JpaRepository<StoreFileName, Long> {
+import java.util.UUID;
+
+public interface FilesStoreRepository extends JpaRepository<Movie, UUID> {
 }

@@ -39,3 +39,5 @@ out/
 ## App
 .env
 fileStorage
+*.log
+*.mbtree
