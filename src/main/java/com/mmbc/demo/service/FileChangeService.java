@@ -55,7 +55,6 @@ public class FileChangeService {
         Movie movie = filesStoreRepository.getReferenceById(movieId);
         System.out.println("1   FFmpeg   !");
         System.out.println(System.getProperty("FFmpeg"));
-        System.out.println(id);
         System.out.println(System.getProperty("ffmpeg"));
 //        System.setProperty("ffmpeg", Const.pathFFmpeg); // todo сделать
         FFmpeg ffmpeg = new FFmpeg("c:\\FFmpeg\\bin\\ffmpeg");
@@ -65,13 +64,12 @@ public class FileChangeService {
         String output = "fileStorage/output.mp4";
         FFmpegProbeResult in = ffprobe.probe(input);
 
-
         FFmpegBuilder builder = new FFmpegBuilder()
                 .setInput(input) // Or filename
                 .overrideOutputFiles(true) // Override the output if it exists
                 .addOutput(output)   // Filename for the destination
                 .setFormat("mp4")        // Format is inferred from filename, or can be set
-//                .setVideoResolution(width, height) // at widthxheight resolution
+                .setVideoResolution(width, height) // at widthxheight resolution
                 .done();
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
 
@@ -90,15 +88,15 @@ public class FileChangeService {
 //                filesStoreRepository.save(movie);
                 filesStoreRepository.saveAndFlush(movie);
                 // Print out interesting information about the progress
-                System.out.println(String.format(
-                        "[%.0f%%] status:%s frame:%d time:%s ms fps:%.0f speed:%.2fx",
+                System.out.printf(
+                        "[%.0f%%] status:%s frame:%d time:%s ms fps:%.0f speed:%.2fx%n",
                         percentage * 100,
                         progress.status,
                         progress.frame,
                         FFmpegUtils.toTimecode(progress.out_time_ns, TimeUnit.NANOSECONDS),
                         progress.fps.doubleValue(),
                         progress.speed
-                ));
+                );
             }
         });
         System.out.println("run");
@@ -109,8 +107,7 @@ public class FileChangeService {
     public Movie getStatus(String id) throws IOException {
         //todo если комп выключили как это отразиться ?
         UUID movieId = UUID.fromString(id);
-        Movie movie = filesStoreRepository.getReferenceById(movieId);
-        return movie;
+        return filesStoreRepository.getReferenceById(movieId);
     }
 
 

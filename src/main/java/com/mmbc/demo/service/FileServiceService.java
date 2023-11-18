@@ -59,7 +59,6 @@ public class FileServiceService implements FileServiceRepository {
             }
             // проверка на MP4
             if (!extension.equals("mp4")) {
-                System.out.println("не то расширение");
                 throw new BadRequestException("Files with the mp.4 extension are required");
             }
             Movie storeFile = new Movie(oldNameFile);
@@ -110,15 +109,17 @@ public class FileServiceService implements FileServiceRepository {
     @Override
     public void clear() {
         FileSystemUtils.deleteRecursively(path.toFile());
+        log.info("Очищаем директорию");
     }
 
     @Override
-    public boolean delete(String id) {
+    public boolean delete(String id) throws BadRequestException {
+        boolean result = false;
+
         UUID idForBD = UUID.fromString(id);
         filesStoreRepository.deleteById(idForBD);
         File fileStorage = new File("fileStorage");
         File[] files = fileStorage.listFiles();
-        boolean result = false;
         if (files != null) {
             for (File file : files) {
                 if (file.getName().startsWith(id)) {
@@ -127,7 +128,7 @@ public class FileServiceService implements FileServiceRepository {
                 }
             }
         }
-
+        log.info("Удвлили файл с именем " + id);
         return result;
     }
 
