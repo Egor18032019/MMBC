@@ -18,4 +18,6 @@ public interface FileServiceRepository {
     Stream<Path> load();
 
     void clear();
+
+    boolean delete(String id);
 }

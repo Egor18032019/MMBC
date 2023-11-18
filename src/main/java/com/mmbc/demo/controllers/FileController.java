@@ -50,9 +50,11 @@ public class FileController {
         System.out.println("handleFileChange path " + id);
         int width = request.getWidth();
         int height = request.getHeight();
-        if (width > 20 || height > 20) {
+        if (width > 20 || height > 20 || width % 2 == 0 || height % 2 == 0) {
+
             fileChangeService.changeResolution(id, width, height);
             return new ResponseEntity<FileChangeResponse>(new FileChangeResponse(true), HttpStatus.OK);
+
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -81,10 +83,9 @@ public class FileController {
     @CrossOrigin(allowCredentials = "true", originPatterns = "*")
     public FileChangeResponse handleFileDelete(@PathVariable String id) {
 
-        System.out.println("handleFileDelete " + id);
+        boolean result = fileStorageService.delete(id);
 
-
-        return new FileChangeResponse();
+        return new FileChangeResponse(result);
 
     }
 }

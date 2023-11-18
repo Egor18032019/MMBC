@@ -11,14 +11,11 @@ import net.bramp.ffmpeg.job.FFmpegJob;
 import net.bramp.ffmpeg.probe.FFmpegProbeResult;
 import net.bramp.ffmpeg.progress.Progress;
 import net.bramp.ffmpeg.progress.ProgressListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -58,12 +55,13 @@ public class FileChangeService {
         Movie movie = filesStoreRepository.getReferenceById(movieId);
         System.out.println("1   FFmpeg   !");
         System.out.println(System.getProperty("FFmpeg"));
+        System.out.println(id);
         System.out.println(System.getProperty("ffmpeg"));
 //        System.setProperty("ffmpeg", Const.pathFFmpeg); // todo сделать
         FFmpeg ffmpeg = new FFmpeg("c:\\FFmpeg\\bin\\ffmpeg");
         FFprobe ffprobe = new FFprobe("c:\\FFmpeg\\bin\\ffprobe");
         //todo исправить
-        String input = "fileStorage/test1.mp4";
+        String input = "fileStorage/" + id + ".mp4";
         String output = "fileStorage/output.mp4";
         FFmpegProbeResult in = ffprobe.probe(input);
 
@@ -73,11 +71,11 @@ public class FileChangeService {
                 .overrideOutputFiles(true) // Override the output if it exists
                 .addOutput(output)   // Filename for the destination
                 .setFormat("mp4")        // Format is inferred from filename, or can be set
-                .setVideoResolution(width, height) // at widthxheight resolution
-                 .done();
+//                .setVideoResolution(width, height) // at widthxheight resolution
+                .done();
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
 
-            // Using the FFmpegProbeResult determine the duration of the input
+        // Using the FFmpegProbeResult determine the duration of the input
         FFmpegJob job = executor.createJob(builder, new ProgressListener() {
             final double duration_ns = in.getFormat().duration * TimeUnit.SECONDS.toNanos(1);
 
@@ -109,8 +107,11 @@ public class FileChangeService {
     }
 
     public Movie getStatus(String id) throws IOException {
+        //todo если комп выключили как это отразиться ?
         UUID movieId = UUID.fromString(id);
         Movie movie = filesStoreRepository.getReferenceById(movieId);
         return movie;
     }
+
+
 }

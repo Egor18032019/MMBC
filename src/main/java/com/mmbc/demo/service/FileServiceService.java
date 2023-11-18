@@ -1,8 +1,8 @@
 package com.mmbc.demo.service;
 
 import com.mmbc.demo.exception.BadRequestException;
-import com.mmbc.demo.store.Movie;
 import com.mmbc.demo.store.FilesStoreRepository;
+import com.mmbc.demo.store.Movie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
@@ -18,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @Service
@@ -109,4 +111,25 @@ public class FileServiceService implements FileServiceRepository {
     public void clear() {
         FileSystemUtils.deleteRecursively(path.toFile());
     }
+
+    @Override
+    public boolean delete(String id) {
+        UUID idForBD = UUID.fromString(id);
+        filesStoreRepository.deleteById(idForBD);
+        File fileStorage = new File("fileStorage");
+        File[] files = fileStorage.listFiles();
+        boolean result = false;
+        if (files != null) {
+            for (File file : files) {
+                if (file.getName().startsWith(id)) {
+                    result = file.delete();
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+
 }
