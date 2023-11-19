@@ -84,7 +84,7 @@ public class FileChangeService {
             public void progress(Progress progress) {
                 double percentage = progress.out_time_ns / duration_ns;
                 //todo как то по другому хранить статус? hashmap ?
-//
+// Сделать отдельно хранилище
                 movie.setStatus(String.valueOf(progress.status));
                 Long oldFrame = movie.getFrame();
                 movie.setFrame(progress.frame);
