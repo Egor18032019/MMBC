@@ -13,9 +13,12 @@ import net.bramp.ffmpeg.progress.Progress;
 import net.bramp.ffmpeg.progress.ProgressListener;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -80,6 +83,8 @@ public class FileChangeService {
             @Override
             public void progress(Progress progress) {
                 double percentage = progress.out_time_ns / duration_ns;
+                //todo как то по другому хранить статус? hashmap ?
+//
                 movie.setStatus(String.valueOf(progress.status));
                 Long oldFrame = movie.getFrame();
                 movie.setFrame(progress.frame);
@@ -101,7 +106,12 @@ public class FileChangeService {
         });
         System.out.println("run");
         job.run();
-        System.out.println("end");
+        //todo проверка на перезапись ?
+        System.out.println("перезапись");
+        Path inputPath = Paths.get(input);
+        Path outputPath = Paths.get(output);
+        Files.delete(inputPath);
+        Files.move(outputPath, inputPath);
     }
 
     public Movie getStatus(String id) throws IOException {
