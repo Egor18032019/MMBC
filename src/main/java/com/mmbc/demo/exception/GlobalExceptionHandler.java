@@ -23,22 +23,20 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<Error> handleException400(HttpServletRequest request,
                                                     NoHandlerFoundException exception) {
-        System.out.println("       handleException400");
         return new ResponseEntity<>(new Error(400, "Validation Failed"), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler
     public ResponseEntity<Error> handleException(BadRequestException exception) {
-        System.out.println(exception.getMessage());
         return new ResponseEntity<>(new Error(400, exception.getMessage()), HttpStatus.BAD_REQUEST);
-
     }
+
     @ExceptionHandler
     public ResponseEntity<Error> handleException(MissingPathVariableException exception) {
-        System.out.println(exception.getMessage() +  "ПУТЬ ");
         return new ResponseEntity<>(new Error(400, "MissingPathVariableException"), HttpStatus.BAD_REQUEST);
 
     }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<?> handleException(HttpMessageNotReadableException e) {
         System.out.println(e.getMessage());

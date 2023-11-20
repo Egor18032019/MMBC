@@ -1,4 +1,4 @@
-package com.mmbc.demo.store;
+package com.mmbc.demo.store.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,25 +17,20 @@ public class Movie {
     @Column()
     String oldName;
     @Column()
-    String status;
-
-    @Column()
-    Long frame;
+    Boolean processing;
     @Column()
     String processingSuccess;
 
 
-    public Movie(String oldName, String status, Long frame, String processingSuccess) {
+    public Movie(String oldName, Boolean processing, String processingSuccess) {
         this.oldName = oldName;
-        this.status = status;
-        this.frame = frame;
+        this.processing = processing;
         this.processingSuccess = processingSuccess;
     }
 
     public Movie(String oldName) {
         this.oldName = oldName;
-        status = "creat";
-        frame = 0L;
+        processing = false;
         processingSuccess = "null";
     }
 

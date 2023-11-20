@@ -1,4 +1,4 @@
-package com.mmbc.demo.store;
+package com.mmbc.demo.store.entities;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

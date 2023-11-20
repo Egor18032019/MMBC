@@ -10,7 +10,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileStatusResponse {
-        //TODO в чем разница между id и именем файла ? id это идишник из бд
     String id;//: uid,
     String filename;
     Boolean processing;//- идёт ли процесс обработки

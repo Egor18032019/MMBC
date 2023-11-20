@@ -1,8 +1,8 @@
 package com.mmbc.demo.service;
 
 import com.mmbc.demo.exception.BadRequestException;
-import com.mmbc.demo.store.FilesStoreRepository;
-import com.mmbc.demo.store.Movie;
+import com.mmbc.demo.store.entities.FilesStoreRepository;
+import com.mmbc.demo.store.entities.Movie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -17,16 +17,16 @@ import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
+
+import static com.mmbc.demo.utils.ConstantForAll.path;
 
 @Service
 public class FileServiceService implements FileServiceRepository {
     static final Logger log =
             LoggerFactory.getLogger(FileServiceService.class);
-    private final Path path = Paths.get(System.getProperty("user.dir") + "/fileStorage");
     final FilesStoreRepository filesStoreRepository;
 
     public FileServiceService(FilesStoreRepository filesStoreRepository) {
@@ -46,7 +46,7 @@ public class FileServiceService implements FileServiceRepository {
 
     @Override
     public Movie save(MultipartFile multipartFile) {
-        if (!Files.exists(this.path)) {
+        if (!Files.exists(path)) {
             this.init();
         }
         try {
@@ -65,7 +65,7 @@ public class FileServiceService implements FileServiceRepository {
             filesStoreRepository.save(storeFile);
 
             String newFileName = storeFile.getId() + "." + extension;
-            Path newPath = Path.of(String.valueOf(this.path), newFileName);
+            Path newPath = Path.of(String.valueOf(path), newFileName);
             Files.copy(multipartFile.getInputStream(), newPath);
 
             log.info("Сохраняем файл" + multipartFile.getOriginalFilename());
@@ -97,9 +97,9 @@ public class FileServiceService implements FileServiceRepository {
     @Override
     public Stream<Path> load() {
         try {
-            return Files.walk(this.path, 1)
-                    .filter(path -> !path.equals(this.path))
-                    .map(this.path::relativize);
+            return Files.walk(path, 1)
+                    .filter(path -> !path.equals(path))
+                    .map(path::relativize);
         } catch (IOException e) {
             log.error("Невозможно загрузить файл");
             throw new RuntimeException("Could not load the files");

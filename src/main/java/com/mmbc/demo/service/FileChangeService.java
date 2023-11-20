@@ -1,7 +1,11 @@
 package com.mmbc.demo.service;
 
-import com.mmbc.demo.store.FilesStoreRepository;
-import com.mmbc.demo.store.Movie;
+import com.mmbc.demo.exception.BadRequestException;
+import com.mmbc.demo.store.StatusStore;
+import com.mmbc.demo.store.StatusStoreRepository;
+import com.mmbc.demo.store.entities.FilesStoreRepository;
+import com.mmbc.demo.store.entities.Movie;
+import jakarta.persistence.EntityNotFoundException;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
 import net.bramp.ffmpeg.FFmpegUtils;
@@ -11,25 +15,27 @@ import net.bramp.ffmpeg.job.FFmpegJob;
 import net.bramp.ffmpeg.probe.FFmpegProbeResult;
 import net.bramp.ffmpeg.progress.Progress;
 import net.bramp.ffmpeg.progress.ProgressListener;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.mmbc.demo.utils.ConstantForAll.fileStorage;
+
 @Service
 public class FileChangeService {
-    private final Path path = Paths.get(System.getProperty("user.dir") + "/fileStorage");
-    final
-    FilesStoreRepository filesStoreRepository;
+    final FilesStoreRepository filesStoreRepository;
+    final StatusStoreRepository statusStoreRepository;
 
-    public FileChangeService(FilesStoreRepository filesStoreRepository) {
+    public FileChangeService(FilesStoreRepository filesStoreRepository, StatusStoreRepository statusStoreRepository) {
         this.filesStoreRepository = filesStoreRepository;
+        this.statusStoreRepository = statusStoreRepository;
     }
 
     public String change(int width, int height) throws IOException {
@@ -53,72 +59,83 @@ public class FileChangeService {
         return output;
     }
 
-    public void changeResolution(String id, int width, int height) throws IOException {
+    public Boolean changeResolution(String id, int width, int height) throws IOException {
+        Boolean result = false;
         UUID movieId = UUID.fromString(id);
         Movie movie = filesStoreRepository.getReferenceById(movieId);
-        System.out.println("1   FFmpeg   !");
-        System.out.println(System.getProperty("FFmpeg"));
-        System.out.println(System.getProperty("ffmpeg"));
-//        System.setProperty("ffmpeg", Const.pathFFmpeg); // todo сделать
-        FFmpeg ffmpeg = new FFmpeg("c:\\FFmpeg\\bin\\ffmpeg");
-        FFprobe ffprobe = new FFprobe("c:\\FFmpeg\\bin\\ffprobe");
-        //todo исправить
-        String input = "fileStorage/" + id + ".mp4";
-        String output = "fileStorage/output.mp4";
-        FFmpegProbeResult in = ffprobe.probe(input);
+        try {
+// todo сделать что бы путь брался из системы
 
-        FFmpegBuilder builder = new FFmpegBuilder()
-                .setInput(input) // Or filename
-                .overrideOutputFiles(true) // Override the output if it exists
-                .addOutput(output)   // Filename for the destination
-                .setFormat("mp4")        // Format is inferred from filename, or can be set
-                .setVideoResolution(width, height) // at widthxheight resolution
-                .done();
-        FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
+            FFmpeg ffmpeg = new FFmpeg("c:\\FFmpeg\\bin\\ffmpeg");
+            FFprobe ffprobe = new FFprobe("c:\\FFmpeg\\bin\\ffprobe");
+            String input = fileStorage + id + ".mp4";
+            String output = fileStorage + "output.mp4";
+            FFmpegProbeResult in = ffprobe.probe(input);
 
-        // Using the FFmpegProbeResult determine the duration of the input
-        FFmpegJob job = executor.createJob(builder, new ProgressListener() {
-            final double duration_ns = in.getFormat().duration * TimeUnit.SECONDS.toNanos(1);
+            FFmpegBuilder builder = new FFmpegBuilder()
+                    .setInput(input) // Or filename
+                    .overrideOutputFiles(true) // Override the output if it exists
+                    .addOutput(output)   // Filename for the destination
+                    .setFormat("mp4")        // Format is inferred from filename, or can be set
+                    .setVideoResolution(width, height) // at widthxheight resolution
+                    .done();
+            FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
 
-            @Override
-            public void progress(Progress progress) {
-                double percentage = progress.out_time_ns / duration_ns;
-                //todo как то по другому хранить статус? hashmap ?
-// Сделать отдельно хранилище
-                movie.setStatus(String.valueOf(progress.status));
-                Long oldFrame = movie.getFrame();
-                movie.setFrame(progress.frame);
-                boolean isSuccess = oldFrame.compareTo(progress.frame) < 0;
-                movie.setProcessingSuccess(Boolean.toString(isSuccess));
-//                filesStoreRepository.save(movie);
-                filesStoreRepository.saveAndFlush(movie);
-                // Print out interesting information about the progress
-                System.out.printf(
-                        "[%.0f%%] status:%s frame:%d time:%s ms fps:%.0f speed:%.2fx%n",
-                        percentage * 100,
-                        progress.status,
-                        progress.frame,
-                        FFmpegUtils.toTimecode(progress.out_time_ns, TimeUnit.NANOSECONDS),
-                        progress.fps.doubleValue(),
-                        progress.speed
-                );
-            }
-        });
-        System.out.println("run");
-        job.run();
-        //todo проверка на перезапись ?
-        System.out.println("перезапись");
-        Path inputPath = Paths.get(input);
-        Path outputPath = Paths.get(output);
-        Files.delete(inputPath);
-        Files.move(outputPath, inputPath);
+            // Using the FFmpegProbeResult determine the duration of the input
+            FFmpegJob job = executor.createJob(builder, new ProgressListener() {
+                final double duration_ns = in.getFormat().duration * TimeUnit.SECONDS.toNanos(1);
+
+                @Override
+                public void progress(Progress progress) {
+                    double percentage = progress.out_time_ns / duration_ns;
+                    statusStoreRepository.add(movieId, new StatusStore(progress.status.toString(), progress.frame, percentage * 100));
+                    // Print out interesting information about the progress
+                    System.out.printf(
+                            "[%.0f%%] status:%s frame:%d time:%s ms fps:%.0f speed:%.2fx%n",
+                            percentage * 100,
+                            progress.status,
+                            progress.frame,
+                            FFmpegUtils.toTimecode(progress.out_time_ns, TimeUnit.NANOSECONDS),
+                            progress.fps.doubleValue(),
+                            progress.speed
+                    );
+                }
+            });
+
+            movie.setProcessing(true);
+            filesStoreRepository.saveAndFlush(movie);
+            System.out.println("run");
+            job.run();
+            Path inputPath = Paths.get(input);
+            Path outputPath = Paths.get(output);
+            Files.delete(inputPath);
+            Files.move(outputPath, inputPath);
+            result = true;
+            movie.setProcessingSuccess(String.valueOf(true));
+            movie.setProcessing(false);
+            filesStoreRepository.saveAndFlush(movie);
+        } catch (RuntimeException e) {
+            movie.setProcessingSuccess(String.valueOf(false));
+            movie.setProcessing(false);
+            filesStoreRepository.saveAndFlush(movie);
+            result = false;
+        }
+
+        return result;
     }
+
 
     public Movie getStatus(String id) throws IOException {
-        //todo если комп выключили как это отразиться ?
-        UUID movieId = UUID.fromString(id);
-        return filesStoreRepository.getReferenceById(movieId);
+        Movie movie;
+        try {
+            UUID movieId = UUID.fromString(id);
+            //todo проверка на длину uuid ?
+            movie = filesStoreRepository.getReferenceById(movieId);
+            System.out.println(movie);
+        } catch (EntityNotFoundException exception) {
+            throw new BadRequestException("Unable to find id");
+        }
+        return movie;
     }
-
 
 }

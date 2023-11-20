@@ -7,7 +7,7 @@ import com.mmbc.demo.schemas.FileCreatResponse;
 import com.mmbc.demo.schemas.FileStatusResponse;
 import com.mmbc.demo.service.FileChangeService;
 import com.mmbc.demo.service.FileServiceService;
-import com.mmbc.demo.store.Movie;
+import com.mmbc.demo.store.entities.Movie;
 import com.mmbc.demo.utils.EndPoint;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -42,7 +42,6 @@ public class FileController {
         }
     }
 
-
     @PatchMapping(value = {"{id}"})
     @CrossOrigin(allowCredentials = "true", originPatterns = "*")
     public ResponseEntity<FileChangeResponse> handleFileChange(@PathVariable String id, @RequestBody() FileChangeRequest request) {
@@ -50,11 +49,12 @@ public class FileController {
         int height = request.getHeight();
         if (width > 20 && height > 20 && width % 2 == 0 && height % 2 == 0) {
             try {
-                fileChangeService.changeResolution(id, width, height);
+                Boolean success = fileChangeService.changeResolution(id, width, height);
+                return new ResponseEntity<>(new FileChangeResponse(success), HttpStatus.OK);
             } catch (IOException e) {
                 throw new BadRequestException("Расширение должно быть чётным число больше 20");
             }
-            return new ResponseEntity<FileChangeResponse>(new FileChangeResponse(true), HttpStatus.OK);
+//            return new ResponseEntity<FileChangeResponse>(new FileChangeResponse(success), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -65,9 +65,9 @@ public class FileController {
     public FileStatusResponse handleFileStatus(@PathVariable String id) {
         try {
             Movie movie = fileChangeService.getStatus(id);
-            String status = movie.getStatus();
-            Boolean sts = Objects.equals(status, "continue");
-            return new FileStatusResponse(id, movie.getOldName(), sts, movie.getProcessingSuccess());
+            Boolean processing = movie.getProcessing();
+            String processingSuccess = movie.getProcessingSuccess();
+            return new FileStatusResponse(id, movie.getOldName(), processing, processingSuccess);
         } catch (IOException e) {
             throw new BadRequestException(e.getMessage());
         }
