@@ -1,40 +1,47 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.1.5'
-	id "org.springdoc.openapi-gradle-plugin" version "1.8.0"
-	id 'io.spring.dependency-management' version '1.1.3'
+    id 'java'
+    id 'org.springframework.boot' version '3.1.5'
+    id "org.springdoc.openapi-gradle-plugin" version "1.8.0"
+    id 'io.spring.dependency-management' version '1.1.3'
 }
 
 group = 'com.mmbc'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	sourceCompatibility = '17'
+    sourceCompatibility = '17'
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	// https://mvnrepository.com/artifact/net.bramp.ffmpeg/ffmpeg
-	implementation group: 'net.bramp.ffmpeg', name: 'ffmpeg', version: '0.1'
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+// https://mvnrepository.com/artifact/net.bramp.ffmpeg/ffmpeg
+    implementation group: 'net.bramp.ffmpeg', name: 'ffmpeg', version: '0.8.0'
+    // https://mvnrepository.com/artifact/org.postgresql/postgresql
+    implementation group: 'org.postgresql', name: 'postgresql', version: '42.6.0'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+//// https://mvnrepository.com/artifact/io.reactivex.rxjava3/rxjava
+	implementation group: 'io.reactivex.rxjava3', name: 'rxjava', version: '3.1.8'
+
 }
 
 tasks.named('bootBuildImage') {
-	builder = 'paketobuildpacks/builder-jammy-base:latest'
+    builder = 'paketobuildpacks/builder-jammy-base:latest'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
