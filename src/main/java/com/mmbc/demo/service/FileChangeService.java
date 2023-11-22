@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.mmbc.demo.utils.ConstantForAll.fileStorage;
+import static com.mmbc.demo.utils.ConstantForAll.pathFFMPEGLinux;
 
 @Service
 public class FileChangeService {
@@ -66,14 +67,16 @@ public class FileChangeService {
         try {
 // todo сделать что бы путь брался из системы
             System.out.println(System.getProperty("ffmpeg"));
-            System.out.println(System.getenv("ffmpeg"));
-            System.out.println(System.getProperty("FFmpeg"));
+            System.out.println(System.getenv("ffplay"));
+            System.out.println(System.getProperty("ffplay"));
             System.out.println(System.getenv("FFmpeg"));
+            // с другой стороны в linux/dockere он будет лежать /usr/bin/
 
-            FFmpeg ffmpeg = new FFmpeg("/usr/bin/ffmpeg");
-            FFprobe ffprobe = new FFprobe("/usr/bin/ffprobe");
+            FFmpeg ffmpeg = new FFmpeg(pathFFMPEGLinux + "ffmpeg");
+            FFprobe ffprobe = new FFprobe(pathFFMPEGLinux + "ffprobe");
             String input = fileStorage + id + ".mp4";
             String output = fileStorage + "output.mp4";
+            //todo проверка что ffmpeg не равно null ?
             FFmpegProbeResult in = ffprobe.probe(input);
 
             FFmpegBuilder builder = new FFmpegBuilder()

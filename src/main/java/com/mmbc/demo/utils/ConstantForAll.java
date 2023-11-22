@@ -6,4 +6,6 @@ import java.nio.file.Paths;
 public class ConstantForAll {
     public static final Path path = Paths.get(System.getProperty("user.dir") + "/fileStorage");
     public static final String fileStorage = "fileStorage/";
+    public static final String pathFFMPEGLinux = "/usr/bin/";
+
 }
