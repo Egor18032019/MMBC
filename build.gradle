@@ -42,6 +42,9 @@ tasks.named('bootBuildImage') {
     builder = 'paketobuildpacks/builder-jammy-base:latest'
 }
 
+tasks.jar {
+    manifest.attributes["Main-Class"] = "com/mmbc/demo/DemoApplication.java"
+}
 tasks.named('test') {
     useJUnitPlatform()
 }

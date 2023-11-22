@@ -65,9 +65,13 @@ public class FileChangeService {
         Movie movie = filesStoreRepository.getReferenceById(movieId);
         try {
 // todo сделать что бы путь брался из системы
+            System.out.println(System.getProperty("ffmpeg"));
+            System.out.println(System.getenv("ffmpeg"));
+            System.out.println(System.getProperty("FFmpeg"));
+            System.out.println(System.getenv("FFmpeg"));
 
-            FFmpeg ffmpeg = new FFmpeg("c:\\FFmpeg\\bin\\ffmpeg");
-            FFprobe ffprobe = new FFprobe("c:\\FFmpeg\\bin\\ffprobe");
+            FFmpeg ffmpeg = new FFmpeg("/usr/bin/ffmpeg");
+            FFprobe ffprobe = new FFprobe("/usr/bin/ffprobe");
             String input = fileStorage + id + ".mp4";
             String output = fileStorage + "output.mp4";
             FFmpegProbeResult in = ffprobe.probe(input);

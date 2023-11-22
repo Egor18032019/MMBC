@@ -1,0 +1,25 @@
+version: '2.4'
+
+services:
+  appmmbc:
+    build:
+      context: .
+    container_name: appmmbc
+    ports:
+      - "${HTTP_HOST_PORT}:8080"
+    depends_on:
+      - daba
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://daba:5432/compose-postgres
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+  daba:
+    image: 'postgres:13-alpine'
+    container_name: daba
+    expose:  # если наружу не надо
+      - 5432
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
